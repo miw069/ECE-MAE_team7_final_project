@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Person Tracker</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0d0d0d;
+      color: #e0e0e0;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 16px;
+    }
+
+    h1 {
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      color: #aaa;
+      margin-bottom: 12px;
+    }
+
+    /* ── video feed ─────────────────────────────────────── */
+    #feed-container {
+      position: relative;
+      display: inline-block;
+      cursor: crosshair;
+      border: 2px solid #333;
+      border-radius: 6px;
+      overflow: hidden;
+      max-width: 100%;
+    }
+
+    #feed {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      user-select: none;
+    }
+
+    /* ── click flash ────────────────────────────────────── */
+    .click-flash {
+      position: absolute;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 3px solid #ff9800;
+      transform: translate(-50%, -50%) scale(0);
+      pointer-events: none;
+      animation: flash-ring 0.55s ease-out forwards;
+    }
+
+    @keyframes flash-ring {
+      0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+      60%  { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+      100% { transform: translate(-50%, -50%) scale(1.8); opacity: 0; }
+    }
+
+    /* ── status bar ─────────────────────────────────────── */
+    #status-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-top: 12px;
+      width: 100%;
+      max-width: 640px;
+    }
+
+    #state-badge {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      padding: 4px 14px;
+      border-radius: 999px;
+      border: 2px solid currentColor;
+      min-width: 90px;
+      text-align: center;
+    }
+
+    .state-armed  { color: #c8c800; }
+    .state-locked { color: #00b400; }
+    .state-lost   { color: #ffb300; }
+
+    #info-text {
+      flex: 1;
+      font-size: 0.85rem;
+      color: #999;
+    }
+
+    #fps-display {
+      font-size: 0.85rem;
+      color: #666;
+      min-width: 70px;
+      text-align: right;
+    }
+
+    /* ── action buttons ─────────────────────────────────── */
+    #btn-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    #cancel-btn {
+      padding: 8px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #1a1a1a;
+      color: #ff5555;
+      border: 2px solid #ff5555;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+
+    #cancel-btn:hover:not(:disabled) { background: #2a1010; }
+    #cancel-btn:disabled { opacity: 0.35; cursor: default; }
+
+    #depth-btn {
+      padding: 8px 24px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      background: #1a1a1a;
+      color: #4488ff;
+      border: 2px solid #4488ff;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    #depth-btn:hover { background: #0d1a33; }
+
+    #depth-btn.depth-on {
+      background: #0a2a0a;
+      color: #44dd44;
+      border-color: #44dd44;
+    }
+
+    #depth-btn.depth-on:hover { background: #103010; }
+
+    /* ── instructions ───────────────────────────────────── */
+    #instructions {
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: #555;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Person Tracker</h1>
+
+  <div id="feed-container">
+    <img id="feed" src="/stream" alt="video feed" draggable="false" />
+  </div>
+
+  <div id="status-bar">
+    <span id="state-badge" class="state-armed">ARMED</span>
+    <span id="info-text">Click a person to lock on.</span>
+    <span id="fps-display">– fps</span>
+  </div>
+
+  <div id="btn-row">
+    <button id="cancel-btn" disabled>Cancel Tracking</button>
+    <button id="depth-btn">Depth Overlay: OFF</button>
+  </div>
+
+  <p id="instructions">Click directly on a person to lock. Click Cancel or refresh to reset.</p>
+
+  <script>
+    // ── DOM refs ─────────────────────────────────────────
+    const feed      = document.getElementById('feed');
+    const container = document.getElementById('feed-container');
+    const badge     = document.getElementById('state-badge');
+    const infoText  = document.getElementById('info-text');
+    const fpsDisplay= document.getElementById('fps-display');
+    const cancelBtn = document.getElementById('cancel-btn');
+    const depthBtn  = document.getElementById('depth-btn');
+
+    // ── Click → select ───────────────────────────────────
+    feed.addEventListener('click', (e) => {
+      const rect = feed.getBoundingClientRect();
+      const x_norm = (e.clientX - rect.left) / rect.width;
+      const y_norm = (e.clientY - rect.top)  / rect.height;
+
+      // Visual flash
+      spawnFlash(e.clientX - rect.left + container.offsetLeft,
+                 e.clientY - rect.top  + container.offsetTop);
+
+      fetch('/api/select', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ x_norm, y_norm }),
+      }).catch(console.error);
+    });
+
+    // ── Cancel ───────────────────────────────────────────
+    cancelBtn.addEventListener('click', () => {
+      fetch('/api/cancel', { method: 'POST' }).catch(console.error);
+    });
+
+    // ── Depth overlay toggle ──────────────────────────────
+    depthBtn.addEventListener('click', () => {
+      fetch('/api/depth-toggle', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (data.depth_enabled) {
+            depthBtn.textContent = 'Depth Overlay: ON';
+            depthBtn.classList.add('depth-on');
+          } else {
+            depthBtn.textContent = 'Depth Overlay: OFF';
+            depthBtn.classList.remove('depth-on');
+          }
+        })
+        .catch(console.error);
+    });
+
+    // ── Click flash animation ────────────────────────────
+    function spawnFlash(x, y) {
+      const el = document.createElement('div');
+      el.className = 'click-flash';
+      el.style.left = x + 'px';
+      el.style.top  = y + 'px';
+      container.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+
+    // ── SSE state updates ────────────────────────────────
+    const stateClasses = {
+      ARMED:  'state-armed',
+      LOCKED: 'state-locked',
+      LOST:   'state-lost',
+    };
+
+    const evtSource = new EventSource('/api/status');
+    evtSource.onmessage = (e) => {
+      let data;
+      try { data = JSON.parse(e.data); } catch { return; }
+
+      const { state, target_id, lost_frames, lost_timeout, fps } = data;
+
+      // Badge
+      badge.textContent = state;
+      badge.className   = 'state-badge ' + (stateClasses[state] ?? '');
+
+      // Info line
+      if (state === 'ARMED') {
+        infoText.textContent = 'Click a person to lock on.';
+      } else if (state === 'LOCKED') {
+        infoText.textContent = `Locked on ID ${target_id}`;
+      } else if (state === 'LOST') {
+        infoText.textContent =
+          `Lost target ID ${target_id} — reacquiring… (${lost_frames}/${lost_timeout})`;
+      }
+
+      // FPS
+      fpsDisplay.textContent = fps > 0 ? `${fps.toFixed(1)} fps` : '– fps';
+
+      // Cancel button
+      cancelBtn.disabled = (state === 'ARMED');
+    };
+
+    evtSource.onerror = () => {
+      infoText.textContent = 'Connection lost — retrying…';
+    };
+  </script>
+</body>
+</html>

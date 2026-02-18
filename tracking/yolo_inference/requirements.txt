@@ -1,0 +1,10 @@
+# Person Tracking System Dependencies
+# Install with: pip install -r requirements.txt
+# Or use existing conda env: conda activate donkey
+
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+depthai>=3.3.0
