@@ -1,0 +1,118 @@
+import numpy as np
+import math
+import time
+
+# ===============================
+# PARAMETERS
+# ===============================
+
+R = 3.0                # Radius of bounding circle (meters)
+n = 3                  # Number of lemniscates to perform
+points_per_loop = 1000
+wheelbase = 0.25       # Car wheelbase (meters)
+lookahead = 0.3        # Pure pursuit lookahead distance
+speed = 1.0            # Constant forward speed (m/s)
+
+dt = 0.02              # Control timestep
+
+# ===============================
+# LEMNISCATE GENERATOR
+# ===============================
+
+def generate_lemniscate(R, n, points_per_loop):
+    """
+    Generate n lemniscates scaled to fit inside a circle of radius R
+    """
+    a = R / 1.5   # scale factor so it fits nicely in circle
+    
+    t = np.linspace(0, 2*np.pi*n, points_per_loop*n)
+    
+    x = (a * np.cos(t)) / (1 + np.sin(t)**2)
+    y = (a * np.sin(t) * np.cos(t)) / (1 + np.sin(t)**2)
+    
+    return x, y
+
+# ===============================
+# PURE PURSUIT CONTROLLER
+# ===============================
+
+def pure_pursuit(x, y, yaw, path_x, path_y):
+    """
+    Compute steering angle using pure pursuit
+    """
+    # Find nearest path point
+    distances = np.hypot(path_x - x, path_y - y)
+    nearest_index = np.argmin(distances)
+    
+    # Find lookahead target
+    target_index = nearest_index
+    while target_index < len(path_x)-1:
+        dx = path_x[target_index] - x
+        dy = path_y[target_index] - y
+        if math.hypot(dx, dy) > lookahead:
+            break
+        target_index += 1
+    
+    target_x = path_x[target_index]
+    target_y = path_y[target_index]
+    
+    # Transform to vehicle coordinates
+    dx = target_x - x
+    dy = target_y - y
+    
+    local_x =  math.cos(-yaw)*dx - math.sin(-yaw)*dy
+    local_y =  math.sin(-yaw)*dx + math.cos(-yaw)*dy
+    
+    # Compute curvature
+    if local_x == 0:
+        return 0.0
+    
+    curvature = 2 * local_y / (lookahead**2)
+    steering_angle = math.atan(curvature * wheelbase)
+    
+    return steering_angle
+
+# ===============================
+# SIMULATION LOOP
+# ===============================
+
+def run_sim():
+    path_x, path_y = generate_lemniscate(R, n, points_per_loop)
+    
+    # Initial vehicle state
+    x = path_x[0]
+    y = path_y[0]
+    yaw = 0.0
+    
+    for i in range(len(path_x)):
+        steering = pure_pursuit(x, y, yaw, path_x, path_y)
+        
+        # Bicycle model update
+        x += speed * math.cos(yaw) * dt
+        y += speed * math.sin(yaw) * dt
+        yaw += speed / wheelbase * math.tan(steering) * dt
+        
+        # OUTPUT TO HARDWARE HERE
+        send_to_car(speed, steering)
+        
+        time.sleep(dt)
+
+# ===============================
+# HARDWARE INTERFACE (REPLACE)
+# ===============================
+
+def send_to_car(speed, steering):
+    """
+    Replace with PWM or motor controller output.
+    Example:
+        set_motor_pwm(speed)
+        set_servo_angle(steering)
+    """
+    print(f"Speed: {speed:.2f}, Steering: {math.degrees(steering):.2f} deg")
+
+# ===============================
+# RUN
+# ===============================
+
+if __name__ == "__main__":
+    run_sim()
