@@ -262,7 +262,6 @@ colcon build --symlink-install && source /opt/ros/$ROS_DISTRO/setup.bash && sour
 
 
 To start the system after building simply:
-```
 ```bash
 ros2 launch track_search track_search.launch.py
 ```
