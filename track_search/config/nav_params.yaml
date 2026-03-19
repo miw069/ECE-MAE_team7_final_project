@@ -1,0 +1,68 @@
+control_mode_node:
+  ros__parameters:
+    initial_mode: "SEARCH"
+    request_topic: "/tracker/control_mode/request"
+    mode_topic: "/tracker/control_mode"
+    auto_track_topic: "/tracker/auto_track_request"
+    auto_search_topic: "/tracker/auto_search_request"
+
+gps_waypoint_node:
+  ros__parameters:
+    gps_topic: "/fix"
+    pose_topic: "/gps/local_pose"
+    frame_id: "map"
+    use_first_fix_as_origin: true
+    min_motion_for_heading_m: 0.20
+    verbose_gps_logging: false
+    republish_last_pose_hz: 5.0
+    max_pose_hold_s: 15.0
+
+gps_runner_bridge_node:
+  ros__parameters:
+    fix_topic: "/fix"
+    frame_id: "gps"
+    runner_command: ""
+    restart_delay_s: 2.0
+    publish_invalid_fixes: false
+    verbose_runner_output: false
+
+gps_udp_bridge_node:
+  ros__parameters:
+    listen_host: "0.0.0.0"
+    listen_port: 10110
+    fix_topic: "/fix"
+    frame_id: "gps"
+    publish_invalid_fixes: false
+    verbose_udp_logging: false
+
+search_nav_node:
+  ros__parameters:
+    pose_topic: "/gps/local_pose"
+    control_mode_topic: "/tracker/control_mode"
+    cmd_topic: "/cmd_vel_nav"
+    path_topic: "/search/path"
+    status_topic: "/search/status"
+    recenter_topic: "/search/recenter"
+    radius_topic: "/search/set_radius"
+    loops_topic: "/search/set_loops"
+    frame_id: "map"
+    radius_m: 20.0
+    num_loops: 3
+    points_per_loop: 240
+    lookahead_m: 1.5
+    wheelbase_m: 0.25
+    search_speed: 0.25
+    max_steering_angle: 0.4
+    control_hz: 10.0
+    pose_timeout_s: 6.0
+    auto_center_on_first_pose: true
+
+cmd_vel_mux_node:
+  ros__parameters:
+    mode_topic: "/tracker/control_mode"
+    tracker_topic: "/cmd_vel_tracker"
+    search_topic: "/cmd_vel_nav"
+    output_topic: "/cmd_vel"
+    tracker_timeout_s: 0.5
+    search_timeout_s: 0.5
+    publish_hz: 20.0

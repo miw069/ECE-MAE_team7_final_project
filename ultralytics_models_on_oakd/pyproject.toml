@@ -1,0 +1,12 @@
+[project]
+name = "oakd"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "depthai>=3.3.0",
+    "depthai-nodes>=0.4.0",
+    "lap>=0.5.13",
+    "ultralytics>=8.4.19",
+]

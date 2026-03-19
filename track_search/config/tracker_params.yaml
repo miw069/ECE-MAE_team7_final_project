@@ -1,0 +1,39 @@
+tracker_camera_node:
+  ros__parameters:
+    fps_limit: 10
+    lost_timeout_frames: 30
+    target_box_fraction: 0.40
+    model_path: ""
+    tracker_cfg_path: ""
+    enable_gui: false
+    show_info_panel: true
+    publish_annotated_image: true
+    publish_debug_image: false
+    publish_disparity_image: false
+    enable_disparity: false
+    extended_disparity: false
+    subpixel: false
+    lr_check: true
+    image_frame_id: "camera_link"
+    auto_acquire_in_search: true
+    auto_return_to_search: true
+    ui_search_radius_m: 20.0
+    ui_search_radius_step_m: 1.0
+    ui_search_num_loops: 3
+
+tracker_pid_node:
+  ros__parameters:
+    Kp_steering: 0.3
+    Ki_steering: 0.01
+    Kd_steering: 0.10
+    Kp_throttle: 0.3
+    Ki_throttle: 0.0
+    Kd_throttle: 0.05
+    integral_max: 0.5
+    max_speed: 0.50
+    min_speed: 0.10
+    max_steering: 1.0
+    lateral_dead_band: 0.05
+    distance_dead_band: 0.05
+    Ts: 0.10
+    cmd_vel_topic: "/cmd_vel_tracker"
