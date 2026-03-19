@@ -183,8 +183,11 @@ clone repo into src:
 
 ```bash
 cd /home/projects/ros2_ws/src
-git clone https://github.com/grishnakov/ros2_tracking.git
+git clone https://github.com/miw069/ECE-MAE_team7_final_project.git
+cd ECE-MAE_team7_final_project
+mv track_search ../
 cd ..
+rm -rf ECE-MAE_team7_final_project
 ```
 
 install proper venv for this project/package.
