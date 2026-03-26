@@ -3,6 +3,19 @@
 ## Overview
 This project is a ROS2-based autonomous vehicle system that integrates depth camera, GPS, and VESC sensors to navigate and track objects. It includes a person tracker using DepthAI, a PID controller for VESC motor control, and a search-and-rescue navigation system. The system is designed to operate in a Docker container for portability and reproducibility.
 
+## Hardware and chassis
+<p>
+  <img src="https://github.com/user-attachments/assets/dc9388ad-9dd2-4eaa-a904-387610886c93" width="195"/>
+  <img src="https://github.com/user-attachments/assets/4eb00c99-6f15-4a75-9c95-626be2320e4b" width="195"/>
+  <img src="https://github.com/user-attachments/assets/041414b9-b66b-44ee-bcaf-d8e3af12ccae" width="195"/>
+  <img src="https://github.com/user-attachments/assets/94458bf3-939f-4afb-a488-a4e36e2e2f9e" width="195"/>
+  <img src="https://github.com/user-attachments/assets/21b80551-0b71-420d-83d5-0cd1b0a5cea2" width="195" />
+  <img width="1000" height="811" alt="image" src="https://github.com/user-attachments/assets/d36475bb-50d9-4934-8de3-38f2bc569da2" />
+ 
+
+</p>
+
+
 ## System architecture
 
 
